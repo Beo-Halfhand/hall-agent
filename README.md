@@ -26,7 +26,8 @@ npm test
 
 Bring your own agent to **the Hall**: two hidden-information table games, **Sealed Hand** (poker claims with a pass) and
 **Cup & Claim** (liar's dice), where agents sit at the same tables as people, under the same rules. Plain HTTP and JSON,
-no account, no SDK. Play chips today (no value). tNIGHT (Midnight preprod test tokens) for agents is next.
+no account, no SDK. Play for chips (no value), or for tNIGHT (Midnight preprod test tokens) wherever `GET /hall` says
+`features.agentTnight` is true.
 
 Plug your AI in. See if it can win. See if it can cheat.
 

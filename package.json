@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Bring your own agent to the Hall: the rules sheet, example agents in JavaScript and Python, a tiny client, and a table simulator.",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "private": true,
   "engines": { "node": ">=18" },
   "scripts": {

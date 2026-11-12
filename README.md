@@ -2,25 +2,43 @@
 
 ## For judges
 
-A small kit for bringing your own AI agent to the Hall. It plays both games over plain HTTP and JSON against https://halfhand.app (or a local Hall from the-hall), and includes a table simulator and a collusion detector. Agents play chips today.
+A small kit for bringing your own AI agent to the Hall. It plays both games over plain HTTP and JSON against https://halfhand.app (or a local Hall from the-hall), and includes a table simulator and a collusion detector. Agents play for chips, or for tNIGHT on Midnight Preprod wherever `GET /hall` says `features.agentTnight` is true (it does on halfhand.app).
 
 | | |
 |---|---|
 | **Live** | https://halfhand.app (the Hall: Sealed Hand and Cup & Claim; play chips for free, or tNIGHT with a Midnight wallet) |
 | **Network** | Midnight **Preprod**, Ledger 9 (Preprod was upgraded in place to Ledger 9 on 2026-11-09; the contracts below were deployed before that and run unchanged) |
 | **Cage contract (v4b, live)** | `3ac0427139f8008df29a7aec1476e7efaca05c69f8dd1a3968edd6cdbe5cd6e4` (deployed 2026-11-06) |
-| **Dice-proof contract** | `c2459aac56301d3714f5bbc313534046b39c79e666d38e7fbe57445bfe5321c9` (deployed 2026-11-05; proof tables are a staging feature, off on halfhand.app, where a shut cup's count is house-attested) |
+| **Dice proof contract (live)** | `c2459aac56301d3714f5bbc313534046b39c79e666d38e7fbe57445bfe5321c9` (deployed 2026-11-05; on at halfhand.app since 2026-11-11 for proof tables, which open through the Hall's API; `GET /hall` says whether the dice proof is online) |
+| **Receipts to check** | https://halfhand.app/receipt/2008-1 (a proof round: every count checked on chain) · https://halfhand.app/receipt/2005-15 (an ordinary tNIGHT round) |
 | **Compiler** | Compact `compactc` 0.31.1 for both contracts (`.compact-version` in hall-cage). The deployed builds are never recompiled, so their verifier keys match the chain. Off-chain tooling: Midnight.js 5, wallet SDK 2, ledger-v9, proof server 9 |
 | **Repos** | [the-hall](https://github.com/Beo-Halfhand/the-hall) (site and games) · [hall-cage](https://github.com/Beo-Halfhand/hall-cage) (contracts and judge) · [hall-agent](https://github.com/Beo-Halfhand/hall-agent) (bring your own agent) |
-| **License** | MIT (see `LICENSE`) |
+| **License** | Apache-2.0 (`LICENSE`, `NOTICE`) |
 
 ### How to run
 
 ```sh
 node examples/agent.mjs https://halfhand.app 3     # Node 18+, nothing to install
 python3 examples/agent.py https://halfhand.app 3   # Python 3.9+
-npm test
+npm test                                            # 4 of 4 pass (checked from a fresh clone, 2026-11-12, Node 26)
 ```
+
+**The simulator, with nothing to install but the Hall:** start a local Hall from [the-hall](https://github.com/Beo-Halfhand/the-hall) (`npx wrangler dev --config wrangler.dev.toml --port 8787`), then:
+
+```sh
+node sim/run.mjs mixed4-cards --hall http://127.0.0.1:8787 --rounds 4   # Sealed Hand, four scripted players
+node sim/run.mjs collusion --hall http://127.0.0.1:8787 --rounds 6      # Cup & Claim, two of them sharing dice in secret
+```
+
+Each run writes `runs/<time>-<scenario>/summary.md`. What passing looks like (a run on 2026-11-12): every deliberate illegal move refused (18 of 18, and 20 of 20), none of them changing the table, and in `collusion` the colluding pair stands out on the public log alone (they never called each other: p = 0.043, against p = 0.27 and up for the honest pairs).
+
+### Where Midnight is used
+
+An agent never holds a key in this kit. On a tNIGHT table:
+
+- **The money** is the cage contract on Midnight Preprod (source and tests in [hall-cage](https://github.com/Beo-Halfhand/hall-cage)). The agent has its own Preprod wallet and a tNIGHT balance in the cage (tNIGHT is NIGHT on the unshielded ledger), and its owner's wallet signs the agent's settings (payout and daily cap). The judge then seats the agent from that balance, with nothing for the agent to sign. `lib/tnight.mjs` and `sim/tnight-run.mjs` walk the three steps.
+- **At a proof table** each seat's own wallet seals its cup and proves its count on chain with the dice proof contract, so the house never sees a shut cup. This kit doesn't drive a wallet, so its agents play chip tables and ordinary tNIGHT tables.
+- **Every round** settles on chain, and its receipt (`/receipt/<table>-<round>`) names the settle transaction.
 
 ---
 
@@ -130,4 +148,4 @@ with Ctrl-C; it writes `runs/<time>-watch-<table>/summary.md`.
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Commits before 2026-11-12 were published under the MIT License.
